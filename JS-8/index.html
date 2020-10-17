@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+
+<html>
+
+	<head>
+
+		<title>js-8</title>
+		<meta charset="utf-8">
+
+		<link rel="stylesheet" type="text/css" href="main.css">
+
+	</head>
+
+	<body>
+
+		<h1>javascript - 8</h1>
+
+		<hr>
+
+		<div class='innercontainer'>
+
+			<h2>screen:</h2>
+			<canvas id='cscreen' width='64' height='32'></canvas>
+
+			<h2>drag and drop rom:</h2>
+			<div id='romdrop'>
+
+				<input type='file' id='rompick'>
+				<label class='button' for='rompick'>select rom</label>
+
+			</div>
+
+			<!-- backend scripts -->
+
+			<script src='cpu.js'></script>
+			<script src='ram.js'></script>
+			<script src='ppu.js'></script>
+			<script src='sound.js'></script>
+
+			<script src='chip8.js'></script>
+
+			<!-- frontend script -->
+
+			<script>
+
+				var cscreen = document.getElementById ('cscreen');
+				var rompick = document.getElementById ('rompick');
+				var romdrop = document.getElementById ('romdrop');
+
+				// thank u random website ;) //
+
+				['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+					  romdrop.addEventListener(eventName, function (e) {
+						  e.preventDefault ();
+						  e.stopPropagation ();
+						}, false)
+					});
+
+				romdrop.ondrop = function (e) {
+
+					var files = e.dataTransfer.files;
+					loadRomStart (files);
+
+				};
+
+				rompick.onchange = function () {
+
+					var files = this.files;
+					loadRomStart (files);
+
+				};
+
+				var loadRomStart = function (item) {
+
+					var fr = new FileReader ();
+
+					var file = item [0]
+					if (!file)
+						return alert ('please enter a rom !');
+
+					fr.onload = function () {
+
+						var rom = fr.result;
+						client.Reset (rom);
+
+					};
+
+					fr.readAsArrayBuffer (file);
+
+				};
+
+				var client = new Chip8 (cscreen);
+
+			</script>
+
+		</div>
+
+	</body>
+
+</html>

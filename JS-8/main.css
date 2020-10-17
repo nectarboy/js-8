@@ -1,0 +1,121 @@
+/* html */
+
+html, body {
+
+	margin: 0px;
+	padding: 5px;
+
+	height: 100%;
+
+}
+
+/* font */
+
+@font-face {
+
+	font-family: silkscreen;
+	src: url(silkscreen.ttf);
+
+}
+
+/* styling */
+
+h1, h2 {
+
+	padding: 7px;
+
+	width: 50%;
+
+	border-radius: 8px;
+	border-bottom-right-radius: 20px;
+
+	background: #d3957e;
+
+	font-family: silkscreen;
+
+}
+
+.innercontainer {
+
+	padding: 15px;
+	margin: 5px;
+
+	width: 90%;
+
+	border-radius: 18px;
+	border-bottom-right-radius: 54px;
+
+	background: #e5db8e;
+
+}
+
+.button {
+
+	display: block;
+
+	width: 120px;
+	height: 60px;
+
+	font-family: silkscreen;
+
+	text-align: center;
+	line-height: 60px;
+
+	border-radius: 6px;
+
+	border-bottom-right-radius: 18px;
+
+	background: #ffecdb;
+	color: #d3957e;
+
+}
+
+.button:hover {
+
+	background: white;
+
+}
+
+/* chip-8 */
+
+#cscreen {
+
+	margin: 0px;
+
+	width: 320px;
+
+	background: #54755e;
+
+	image-rendering: pixelated;
+	webkit-image-rendering: pixelated;
+	moz-image-rendering: pixelated;
+	ms-image-rendering: pixelated;
+
+	border: 6px solid black;
+	border-bottom: 24px solid black;
+
+	border-radius: 4px;
+
+}
+
+#rompick {
+
+	display: none;
+
+}
+
+#romdrop {
+
+	margin: 0px;
+
+	display: flex;
+
+	width: 250px;
+	height: 200px;
+
+	align-items: center;
+	justify-content: center;
+
+	border: 2px dashed #d3957e;
+
+}
