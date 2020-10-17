@@ -229,7 +229,7 @@ var Cpu = function (c8) {
 	this.JPv0nnn = function (nnn) {
 
 		// jump to adress (nnn + register 0)
-		this.pc = nnn + this.register [0];
+		this.pc = nnn + this.reg [0];
 
 	};
 
