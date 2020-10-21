@@ -1,6 +1,9 @@
-var Chip8 = function (domcanv) {
+var Chip8 = function (domcanv, rom) {
 
 	this.screen = domcanv;
+
+	this.screenw = 64;
+	this.screenh = 32;
 
 	this.cpu = null;
 	this.mem = null;
@@ -10,27 +13,42 @@ var Chip8 = function (domcanv) {
 
 	// functions //
 
-	this.Reset = function (rom) {
+	this.Reset = function () {
 
 		console.log ('resetting console !');
 
-		// init all components
+		// reset all components
 
-		if (this.cpu)
-			this.cpu.stopped = true;
 		this.cpu = new Cpu (this);
-
 		this.mem = new Mem (this, rom);
 		this.ppu = new Ppu (this);
-		this.keyboard = new keyboard (this);
+		this.keyboard = new Keyboard (this);
 		this.sound = new Sound (this);
 
-		// init cpu:
+		// keyboard init
+
+		document.onkeydown = this.keyboard.keydownhandler;
+		document.onkeyup = this.keyboard.keyuphandler;
+
+		// init cpu and ppu
+
+		this.cpu.LoopIterate ();
+		this.ppu.LoopRefresh ();
+
+	};
+
+	this.Stop = function () {
+
+		// about the cpu:
 		// kill and garbage collect current
 		// program, hopefully this is a good
 		// way to do this ?? idk
 
-		this.cpu.Iterate ();
+		if (this.cpu)
+			console.log (this.cpu.stopped = true);	
+
+		document.onkeydown = null;
+		document.onkeyup = null;
 
 	};
 

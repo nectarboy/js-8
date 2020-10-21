@@ -11,6 +11,8 @@ var Cpu = function (c8) {
 
 	var f = 15; // carry reg
 
+	this.keyclicked = false;
+
 	// stack //
 	this.stack = new Uint16Array (16);
 	this.stackpt = 0;
@@ -21,7 +23,8 @@ var Cpu = function (c8) {
 
 	// emulation //
 	this.stopped = false;
-	this.waitforkey = false;
+	this.shouldrefresh;
+	this.emuspeed = 3;
 
 	//// FUNCTIONS ////
 
@@ -32,90 +35,351 @@ var Cpu = function (c8) {
 		// get full opcode
 
 		var opcode = ram [this.pc] << 8 | ram [this.pc + 1];
-		console.log ('opcode:', opcode.toString (16));
+		var hinibble = (opcode >> 12);
+
+		//console.log (opcode.toString (16));
+
+		// get individual properties of opcode
+
+		var x = (opcode & 0x0f00) >> 8;
+		var y = (opcode & 0x00f0) >> 4;
+
+		var nnn = (opcode & 0x0fff);
+		var kk = (opcode & 0x00ff);
+
+		var lonibble = (opcode & 0x000f);
 
 		//// OPCODES ////
 
-		switch (opcode) {
+		switch (hinibble) {
 
-			// ... 
+			//// 	ZEROS
+			case 0x0: {
+
+				switch (opcode) {
+
+					case 0x00e0:
+						this.CLS ();
+						break;
+					case 0x00ee:
+						this.RET ();
+						break;
+					default:
+						this.SYSnnn (nnn);
+				}
+				break;
+
+			}
+
+			//// 	ONES
+			case 0x1: {
+
+				this.JPnnn (nnn);
+				break;
+
+			}
+
+			//// 	TWOS
+			case 0x2: {
+
+				this.CALLnnn (nnn);
+				break;
+
+			}
+
+			//// 	THREES
+			case 0x3: {
+
+				this.SExkk (x, kk);
+				break;
+
+			}
+
+			//// 	FOURS
+			case 0x4: {
+
+				this.SNExkk (x, kk);
+				break;
+
+			}
+
+			//// 	FIVES
+			case 0x5: {
+
+				this.SExy (x, y);
+				break;
+
+			}
+
+			//// 	SIXES
+			case 0x6: {
+
+				this.LDxkk (x, kk);
+				break;
+
+			}
+
+			//// 	SEVENS
+			case 0x7: {
+
+				this.ADDxkk (x, kk);
+				break;
+
+			}
+
+			//// 	EIGHTS
+			case 0x8: {
+
+				switch (lonibble) {
+
+					case 0x0: {
+						this.LDxy (x, y);
+						break;
+					}
+					case 0x1: {
+						this.ORxy (x, y);
+						break;
+					}
+					case 0x2: {
+						this.ANDxy (x, y);
+						break;
+					}
+					case 0x3: {
+						this.XORxy (x, y);
+						break;
+					}
+					case 0x4: {
+						this.ADDxy (x, y);
+						break;
+					}
+					case 0x5: {
+						this.SUBxy (x, y);
+						break;
+					}
+					case 0x6: {
+						this.SHRx (x, y);
+						break;
+					}
+					case 0x7: {
+						this.SUBNxy (x, y);
+						break;
+					}
+					case 0xe: {
+						this.SHLx (x);
+						break;
+					}
+
+				}
+				break;
+
+			}
+
+			//// 	NINES
+			case 0x9: {
+
+				this.SNExy (x, y);
+				break;
+
+			}
+
+			//// 	TENS
+			case 0xa: {
+
+				this.LDinnn (nnn);
+				break;
+
+			}
+
+			//// 	ELEVENS
+			case 0xb: {
+
+				this.JPv0nnn (nnn);
+				break;
+
+			}
+
+			//// 	TWELVES
+			case 0xc: {
+
+				this.RNDxkk (x, kk);
+				break;
+
+			}
+
+			//// 	THIRTEENS
+			case 0xd: {
+
+				this.DRWxyn (x, y, lonibble);
+				break;
+
+			}
+
+			//// 	FOURTEENS
+			case 0xe: {
+
+				switch (kk) {
+
+					case 0x98: {
+						this.SKPx (x);
+						break;
+					}
+					case 0xa1: {
+						this.SKNPx (x);
+						break;
+					}
+
+				}
+				break;
+
+			}
+
+			//// 	FIFTEENS
+			case 0xf: {
+
+				switch (kk) {
+
+					case 0x07: {
+						this.LDxdt (x);
+						break;
+					}
+					case 0x0a: {
+						this.LDxk (x);
+						break;
+					}
+					case 0x15: {
+						this.LDdtx (x);
+						break;
+					}
+					case 0x18: {
+						this.LDstx (x);
+						break;
+					}
+					case 0x1e: {
+						this.ADDix (x);
+						break;
+					}
+					case 0x29: {
+						this.LDfx (x);
+						break;
+					}
+					case 0x33: {
+						this.LDbx (x);
+						break;
+					}
+					case 0x55: {
+						this.LDix (x);
+						break;
+					}
+					case 0x65: {
+						this.LDxi (x);
+						break;
+					}
+
+				}
+				break;
+
+			}
 
 		};
 
 		// update timers
 
-		if (this.delaytimer > 0)
-			this.delaytimer --;
-		if (this.soundtimer > 0)
-			this.soundtimer --;
+		/*if (c8.cpu.delaytimer > 0)
+			c8.cpu.delaytimer --;
+		if (c8.cpu.soundtimer > 0) {
+			c8.sound.Beep ();
+			c8.cpu.soundtimer --;
+		}*/
+
+		// increase program count
+
+		this.pc += 2;
+
+		// reset key state
+
+		this.keyclicked = false;
+
+	};
+
+	this.LoopIterate = function () {
+
+		if (this.stopped)
+			return;
+
+		for (var i = 0; i < this.emuspeed; i ++)
+			this.Iterate ();
+
+		var that = this;
+		setTimeout (function () {
+
+			that.LoopIterate ();
+
+		}, 0);
 
 	};
 
 	//// ALL OPERATIONS ////
 
-	this.SYSaddr = function (nnn) {
+	this.SYSnnn = function (nnn) {
 
-		// deprecated
-		this.pc += 2;
+		// deprecated instruction ! so just skip
 
 	};
 
 	this.CLS = function () {
 
-		// clear the screen
+		// clear the screen with ppu
 		c8.ppu.Clear ();
-		this.pc += 2;
 
 	};
 
 	this.RET = function () {
 
 		// return to last call, then decrease the stack by 1
-		this.pc = this.stack [this.stackpt];
-
 		this.stackpt --;
 		// if stack underflows, stop !
-		this.stopped = this.stackpt < 0 ? true : falsel
+		if (this.stackpt < 0)
+			c8.Stop ();
+		this.pc = this.stack [this.stackpt];
 
 	};
 
 	this.JPnnn = function (nnn) {
 
 		// jump to address (nnn)
-		this.pc = nnn;
+		this.pc = nnn - 2;
 
 	};
 
 	this.CALLnnn = function (nnn) {
-
+		this.stack [this.stackpt] = this.pc;
 		// push pc to stack and jump to subroutine at adress (nnn)
 		this.stackpt ++;
 		// if stack overflows, stop !
-		this.stopped = this.stackpt > 15 ? true : false;
-
-		this.stack [this.stackpt] = this.pc;
-		this.pc = nnn;
+		if (this.stackpt == 16)
+			c8.Stop ();
+		this.JPnnn (nnn);
 
 	};
 
 	this.SExkk = function (x, kk) {
 
 		// if x == kk skip instruction
-		this.pc += (this.reg [x] == kk * 2);
+		this.pc += (this.reg [x] == kk) * 2;
 
 	};
 
 	this.SNExkk = function (x, kk) {
 
 		// if x != kk skip instruction
-		this.pc += (this.reg [x] != kk * 2);
+		this.pc += (this.reg [x] != kk) * 2;
 
 	};
 
 	this.SExy = function (x, y) {
 
 		// if x == y skip instruction
-		this.pc += (this.reg [x] == this.reg [y] * 2);
+		this.pc += (this.reg [x] == this.reg [y]) * 2;
 
 	};
 
@@ -123,7 +387,6 @@ var Cpu = function (c8) {
 
 		// load kk into x reg
 		this.reg [x] = kk;
-		this.pc += 2;
 
 	};
 
@@ -131,7 +394,6 @@ var Cpu = function (c8) {
 
 		// add kk to x reg
 		this.reg [x] += kk;
-		this.pc += 2;
 
 	};
 
@@ -139,7 +401,6 @@ var Cpu = function (c8) {
 
 		// store y reg in x reg
 		this.reg [x] = this.reg [y];
-		this.pc += 2;
 
 	};
 
@@ -147,7 +408,6 @@ var Cpu = function (c8) {
 
 		// store OR of x and y in x reg
 		this.reg [x] = this.reg [x] | this.reg [y];
-		this.pc += 2;
 
 	};
 
@@ -155,7 +415,6 @@ var Cpu = function (c8) {
 
 		// store AND of x and y in x reg
 		this.reg [x] = this.reg [x] & this.reg [y];
-		this.pc += 2;
 
 	};
 
@@ -163,7 +422,6 @@ var Cpu = function (c8) {
 
 		// store XOR of x and y in x reg
 		this.reg [x] = this.reg [x] ^ this.reg [y];
-		this.pc += 2;
 
 	};
 
@@ -172,7 +430,6 @@ var Cpu = function (c8) {
 		// x = x + y, if sum > 255, f reg = 1; otherwise 0
 		var sum = this.reg [x] = this.reg [x] + this.reg [y];
 		this.reg [f] = sum > 255 ? 1 : 0;
-		this.pc += 2;
 
 	};
 
@@ -181,7 +438,6 @@ var Cpu = function (c8) {
 		// x = x - y, if x > y, f reg = 1; otherwise 0
 		this.reg [x] = this.reg [x] - this.reg [y];
 		this.reg [f] = this.reg [x] > this.reg [y] ? 1 : 0;
-		this.pc += 2;
 
 	};
 
@@ -190,16 +446,14 @@ var Cpu = function (c8) {
 		// f reg = x's least significant bit, then shift x to right once
 		this.reg [f] = this.reg [x] & 1;
 		this.reg [x] >> 1;
-		this.pc += 2;
 
 	};
 
-	this.SUBN = function (x, y) {
+	this.SUBNxy = function (x, y) {
 
 		// x = y - x, if y > x, f reg = 1; otherwise 0
 		this.reg [x] = this.reg [y] - this.reg [x];
 		this.reg [f] = this.reg [y] > this.reg [x] ? 1 : 0;
-		this.pc += 2;
 
 	};
 
@@ -208,14 +462,13 @@ var Cpu = function (c8) {
 		// f reg = x's most significant bit, then shift x to left once
 		this.reg [f] = (this.reg [x] >> 7) & 1;
 		this.reg [x] << 1;
-		this.pc += 2;
 
 	};
 
 	this.SNExy = function (x, y) {
 
 		// if x != y skip instruction
-		this.pc += (this.reg [x] != this.reg [y] * 2);
+		this.pc += (this.reg [x] != this.reg [y]) * 2;
 
 	};
 
@@ -229,7 +482,7 @@ var Cpu = function (c8) {
 	this.JPv0nnn = function (nnn) {
 
 		// jump to adress (nnn + register 0)
-		this.pc = nnn + this.reg [0];
+		this.JPnnn (nnn + this.reg [0]);
 
 	};
 
@@ -246,49 +499,146 @@ var Cpu = function (c8) {
 		// drawing a sprite on screen ... this gon be tough ...
 		var ram = c8.mem.ram;
 		var vram = c8.ppu.vram;
-		var w = c8.ppu.w;
+		var w = c8.screenw;
+		var h = c8.screenh;
 
 		var col = 0;
 
+		var px = ((this.reg [x]) % w) | 0;
+		var py = ((this.reg [y]) % h) | 0;
+
 		// starting from address i, read n amt of bytes to draw
-		for (var i = this.i; i < n; i ++) {
+		for (var i = 0; i < n; i ++) {
 
-			var px = this.reg [x];
-			var py = this.reg [y];
+			var x = px;
+			var y = py + i;
 
-			var ct = 0;
+			if (y >= h)
+				break;
 
-			var bin = ram [i].toString (2);
+			var bin = ram [i + this.i].toString (2);
 
-			for (var j = 0, l = bin.length; j < l; j ++) {
-
-				if (ct == 8) {
-
-					px -= 8;
-					py ++;
-					ct = 0;
-
-				}
-				else
-					ct ++;
+			for (var j = 0; j < 8; j ++) {
 
 				var bit = bin [j] | 0;
-				var ind = py * w + px;
-				var prevrambit = vram [ind];
+				var ind = y * w + x;
+
+				if (!col)
+					col = (bit && vram [ind]) | 0;
 
 				vram [ind] = bit ^ vram [ind];
 
-				if (!col)
-					col = (prevrambit && !vram [ind]) | 0;
+				x ++;
 
-				px ++;
+				if (x >= w)
+					break;
 
 			}
 
 		}
 
+		this.shouldrefresh = true;
+
 		this.reg [f] = col;
 
+	};
+
+	this.SKPx = function (x) {
+
+		// if key with x reg is pressed, skip the next instruction
+		this.pc += (c8.keyboard.key [this.reg [x]]) * 2;
+	
+	};
+
+	this.SKNPx = function (x) {
+	
+		// if key with x reg is NOT pressed, skip the next instruction
+		this.pc += (!c8.keyboard.key [this.reg [x]]) * 2;
+	
+	};
+	
+	this.LDxdt = function (x) {
+	
+		// load x reg with delay timer
+		this.reg [x] = this.delaytimer;
+	
+	};
+	
+	this.LDxk = function (x) {
+	
+		// halt execution until key press, when pressed, store the key value in x reg
+		if (!this.keyclicked)
+			return this.pc -= 2;
+		this.reg [x] = c8.keyboard.lastkeyclicked;
+	
+	};
+	
+	this.LDdtx = function (x) {
+	
+		// load delay timer with x reg
+		this.delaytimer = this.reg [x];
+	
+	};
+	
+	this.LDstx = function (x) {
+	
+		// load sound timer with x reg
+		this.soundtimer = this.reg [x];
+	
+	};
+	
+	this.LDdtx = function (x) {
+	
+		// load sound timer with x reg
+		this.soundtimer = this.reg [x];
+	
+	};
+	
+	this.ADDix = function (x) {
+	
+		// store the sum of i reg and x reg in i reg
+		this.i += this.reg [x];
+	
+	};
+	
+	
+	this.LDfx = function (x) {
+	
+		// set reg i to the location of the char sprite reg x points to
+		var lowbits = this.reg [x]; // because only 16 chars
+		this.i = lowbits * 5; // multiply by 5 cuz char sprites made of 5 bytes
+	
+	};
+	
+	this.LDbx = function (x) {
+	
+		// for each digit in (decimal) x reg, store digit from mem index i
+		// to mem index i + 3, (from hundreds to ones)
+		var digits = this.reg [x].toString (); // get digits
+		for (var i = 0, l = 3 - digits.length; i < l; i ++)
+			digits = '0' + digits;
+	
+		for (var i = 0, l = digits.length; i < 3; i ++)
+			c8.mem.ram [this.i + i] = (digits [i]) | 0;
+	
+	};
+	
+	this.LDix = function (x) {
+	
+		// store each of the registers from 0 to x at location i reg
+		// counting location up every store
+		for (var i = 0, l = x; i < l; i ++)
+			c8.mem.ram [this.i + i] = this.reg [i];
+	
+	};
+	
+	this.LDxi = function (x) {
+	
+		// store location i reg at registers 0 to x,
+		// counting location up every store
+		for (var i = 0, l = x; i < l; i ++)
+			this.reg [i] = c8.mem.ram [this.i + i];
+	
 	};
 
 };
