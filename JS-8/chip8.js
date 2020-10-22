@@ -1,4 +1,4 @@
-var Chip8 = function (domcanv, rom) {
+var Chip8 = function (domcanv) {
 
 	this.screen = domcanv;
 
@@ -13,13 +13,13 @@ var Chip8 = function (domcanv, rom) {
 
 	// functions //
 
-	this.Reset = function () {
+	this.Reset = function (emuspeed, rom) {
 
 		console.log ('resetting console !');
 
 		// reset all components
 
-		this.cpu = new Cpu (this);
+		this.cpu = new Cpu (this, emuspeed);
 		this.mem = new Mem (this, rom);
 		this.ppu = new Ppu (this);
 		this.keyboard = new Keyboard (this);
@@ -45,7 +45,7 @@ var Chip8 = function (domcanv, rom) {
 		// way to do this ?? idk
 
 		if (this.cpu)
-			console.log (this.cpu.stopped = true);	
+			this.cpu.stopped = true;
 
 		document.onkeydown = null;
 		document.onkeyup = null;

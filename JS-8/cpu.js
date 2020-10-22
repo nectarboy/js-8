@@ -1,4 +1,4 @@
-var Cpu = function (c8) {
+var Cpu = function (c8, emuspeed) {
 
 	//// FLAGS AND REGISTERS ////
 
@@ -23,8 +23,8 @@ var Cpu = function (c8) {
 
 	// emulation //
 	this.stopped = false;
-	this.shouldrefresh;
-	this.emuspeed = 3;
+	this.shouldrefresh = false;
+	this.emuspeed = emuspeed;
 
 	//// FUNCTIONS ////
 
@@ -35,9 +35,6 @@ var Cpu = function (c8) {
 		// get full opcode
 
 		var opcode = ram [this.pc] << 8 | ram [this.pc + 1];
-		var hinibble = (opcode >> 12);
-
-		//console.log (opcode.toString (16));
 
 		// get individual properties of opcode
 
@@ -47,6 +44,7 @@ var Cpu = function (c8) {
 		var nnn = (opcode & 0x0fff);
 		var kk = (opcode & 0x00ff);
 
+		var hinibble = (opcode >> 12);
 		var lonibble = (opcode & 0x000f);
 
 		//// OPCODES ////
@@ -56,16 +54,17 @@ var Cpu = function (c8) {
 			//// 	ZEROS
 			case 0x0: {
 
-				switch (opcode) {
+				switch (kk) {
 
-					case 0x00e0:
+					case 0xe0:
 						this.CLS ();
 						break;
-					case 0x00ee:
+					case 0xee:
 						this.RET ();
 						break;
 					default:
 						this.SYSnnn (nnn);
+						break;
 				}
 				break;
 
@@ -168,6 +167,10 @@ var Cpu = function (c8) {
 						this.SHLx (x);
 						break;
 					}
+					default: {
+						console.log ('inv math op!:', opcode.toString (16));
+						break;
+					}
 
 				}
 				break;
@@ -193,7 +196,7 @@ var Cpu = function (c8) {
 			//// 	ELEVENS
 			case 0xb: {
 
-				this.JPv0nnn (nnn);
+				this.JPv0nnn (x, nnn);
 				break;
 
 			}
@@ -219,12 +222,16 @@ var Cpu = function (c8) {
 
 				switch (kk) {
 
-					case 0x98: {
+					case 0x9e: {
 						this.SKPx (x);
 						break;
 					}
 					case 0xa1: {
 						this.SKNPx (x);
+						break;
+					}
+					default: {
+						console.log ('inv skip op!:', opcode.toString (16));
 						break;
 					}
 
@@ -274,10 +281,20 @@ var Cpu = function (c8) {
 						this.LDxi (x);
 						break;
 					}
+					default: {
+						console.log ('inv timer op!:', opcode.toString (16));
+						break;
+					}
 
 				}
 				break;
 
+			}
+
+			//// 	???
+			default: {
+				console.log ('inv op!:', opcode.toString (16));
+				break;
 			}
 
 		};
@@ -428,16 +445,17 @@ var Cpu = function (c8) {
 	this.ADDxy = function (x, y) {
 
 		// x = x + y, if sum > 255, f reg = 1; otherwise 0
-		var sum = this.reg [x] = this.reg [x] + this.reg [y];
+		var sum = this.reg [x] + this.reg [y];
+		this.reg [x] = sum;
 		this.reg [f] = sum > 255 ? 1 : 0;
 
 	};
 
 	this.SUBxy = function (x, y) {
 
-		// x = x - y, if x > y, f reg = 1; otherwise 0
-		this.reg [x] = this.reg [x] - this.reg [y];
+		// if x > y, f reg = 1; otherwise 0, x = x - y
 		this.reg [f] = this.reg [x] > this.reg [y] ? 1 : 0;
+		this.reg [x] = this.reg [x] - this.reg [y];
 
 	};
 
@@ -445,23 +463,23 @@ var Cpu = function (c8) {
 
 		// f reg = x's least significant bit, then shift x to right once
 		this.reg [f] = this.reg [x] & 1;
-		this.reg [x] >> 1;
+		this.reg [x] = this.reg [x] >> 1;
 
 	};
 
 	this.SUBNxy = function (x, y) {
 
-		// x = y - x, if y > x, f reg = 1; otherwise 0
-		this.reg [x] = this.reg [y] - this.reg [x];
+		// f reg = 1; otherwise 0, x = y - x, if y > x
 		this.reg [f] = this.reg [y] > this.reg [x] ? 1 : 0;
+		this.reg [x] = this.reg [y] - this.reg [x];
 
 	};
 
 	this.SHLx = function (x) {
 
 		// f reg = x's most significant bit, then shift x to left once
-		this.reg [f] = (this.reg [x] >> 7) & 1;
-		this.reg [x] << 1;
+		this.reg [f] = !!(this.reg [x] & 0x80);
+		this.reg [x] = this.reg [x] << 1;
 
 	};
 
@@ -479,7 +497,7 @@ var Cpu = function (c8) {
 
 	};
 
-	this.JPv0nnn = function (nnn) {
+	this.JPv0nnn = function (x, nnn) {
 
 		// jump to adress (nnn + register 0)
 		this.JPnnn (nnn + this.reg [0]);
@@ -516,44 +534,45 @@ var Cpu = function (c8) {
 			if (y >= h)
 				break;
 
-			var bin = ram [i + this.i].toString (2);
+			var byte = ram [i + this.i];
 
 			for (var j = 0; j < 8; j ++) {
 
-				var bit = bin [j] | 0;
-				var ind = y * w + x;
-
-				if (!col)
-					col = (bit && vram [ind]) | 0;
-
-				vram [ind] = bit ^ vram [ind];
-
-				x ++;
-
 				if (x >= w)
 					break;
+
+				var bit = byte & (0x80 >> j) | 0;
+				var ind = y * w + x;
+
+				var xor = c8.ppu.TogglePx (ind, bit);
+				if (!col)
+					col = xor;
+
+				x ++;
 
 			}
 
 		}
 
-		this.shouldrefresh = true;
-
 		this.reg [f] = col;
+
+		this.shouldrefresh = true;
 
 	};
 
 	this.SKPx = function (x) {
 
 		// if key with x reg is pressed, skip the next instruction
-		this.pc += (c8.keyboard.key [this.reg [x]]) * 2;
+		var lowbits = (this.reg [x] & 0x0f);
+		this.pc += (c8.keyboard.key [lowbits]) * 2;
 	
 	};
 
 	this.SKNPx = function (x) {
 	
 		// if key with x reg is NOT pressed, skip the next instruction
-		this.pc += (!c8.keyboard.key [this.reg [x]]) * 2;
+		var lowbits = (this.reg [x] & 0x0f);
+		this.pc += (!c8.keyboard.key [lowbits]) * 2;
 	
 	};
 	
@@ -587,13 +606,6 @@ var Cpu = function (c8) {
 	
 	};
 	
-	this.LDdtx = function (x) {
-	
-		// load sound timer with x reg
-		this.soundtimer = this.reg [x];
-	
-	};
-	
 	this.ADDix = function (x) {
 	
 		// store the sum of i reg and x reg in i reg
@@ -605,7 +617,7 @@ var Cpu = function (c8) {
 	this.LDfx = function (x) {
 	
 		// set reg i to the location of the char sprite reg x points to
-		var lowbits = this.reg [x]; // because only 16 chars
+		var lowbits = (this.reg [x] & 0x0f); // because only 16 chars
 		this.i = lowbits * 5; // multiply by 5 cuz char sprites made of 5 bytes
 	
 	};
@@ -614,11 +626,13 @@ var Cpu = function (c8) {
 	
 		// for each digit in (decimal) x reg, store digit from mem index i
 		// to mem index i + 3, (from hundreds to ones)
-		var digits = this.reg [x].toString (); // get digits
-		for (var i = 0, l = 3 - digits.length; i < l; i ++)
-			digits = '0' + digits;
+		var digits = [
+			(this.reg [x] / 100) | 0,
+			(this.reg [x] / 10 % 10) | 0,
+			(this.reg [x] % 10) | 0
+		];
 	
-		for (var i = 0, l = digits.length; i < 3; i ++)
+		for (var i = 0; i < 3; i ++)
 			c8.mem.ram [this.i + i] = (digits [i]) | 0;
 	
 	};
@@ -627,7 +641,7 @@ var Cpu = function (c8) {
 	
 		// store each of the registers from 0 to x at location i reg
 		// counting location up every store
-		for (var i = 0, l = x; i < l; i ++)
+		for (var i = 0, l = x + 1; i < l; i ++)
 			c8.mem.ram [this.i + i] = this.reg [i];
 	
 	};
@@ -636,7 +650,7 @@ var Cpu = function (c8) {
 	
 		// store location i reg at registers 0 to x,
 		// counting location up every store
-		for (var i = 0, l = x; i < l; i ++)
+		for (var i = 0, l = x + 1; i < l; i ++)
 			this.reg [i] = c8.mem.ram [this.i + i];
 	
 	};

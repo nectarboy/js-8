@@ -19,14 +19,30 @@
 
 		<div class='innercontainer'>
 
-			<h2>screen:</h2>
-			<canvas id='cscreen' width='64' height='32'></canvas>
+			<h2>screen</h2>
+			<div class='paddingdiv'>
+				<canvas class='screen' id='cscreen' width='64' height='32'></canvas>
+			</div>
 
-			<h2>drag and drop rom:</h2>
-			<div id='romdrop'>
+			<h2>settings</h2>
+			<div class='paddingdiv'>
 
-				<input type='file' id='rompick'>
-				<label class='button' for='rompick'>select rom</label>
+				<p><span class='description'>emulation speed; 0 to pause</span></p>
+				<input type='range' min='0' max='12' value='3' class='slider' id='emuslider'>
+
+			</div>
+
+			<h2>rom</h2>
+			<div class='paddingdiv'>
+
+				<p><span class='description'>drag and drop; or select manually</span></p>
+
+				<div class='dragdrop' id='romdrop'>
+
+					<input type='file' class='gone' id='rompick'>
+					<label class='button' for='rompick'>select rom</label>
+
+				</div>
 
 			</div>
 
@@ -47,6 +63,9 @@
 				var cscreen = document.getElementById ('cscreen');
 				var rompick = document.getElementById ('rompick');
 				var romdrop = document.getElementById ('romdrop');
+
+				var emuslider = document.getElementById ('emuslider');
+				var volslider = document.getElementById ('volslider');
 
 				var client = null;
 
@@ -73,6 +92,15 @@
 
 				};
 
+				emuslider.oninput = function () {
+
+					if (!client)
+						return;
+
+					client.cpu.emuspeed = this.value;
+
+				};
+
 				var loadRomStart = function (item) {
 
 					var fr = new FileReader ();
@@ -86,8 +114,8 @@
 						var rom = fr.result;
 						if (client)
 							client.Stop ();
-						client = new Chip8 (cscreen, rom);
-						client.Reset ();
+						client = new Chip8 (cscreen);
+						client.Reset (emuslider.value, rom);
 
 					};
 
@@ -95,11 +123,41 @@
 
 				};
 
-				//var client = new Chip8 (cscreen);
+				//client = new Chip8 (cscreen);
 
 			</script>
 
 		</div>
+
+		<br>
+
+		<hr>
+
+		<div class='innercontainer'>
+
+			<h2>additional info</h2>
+
+			<div class='paddingdiv'>
+
+				<p><span class='description'>project source code</span></p>
+
+				<a href='https://github.com/nectarboy/js-8'><span class='button'>github</span></a>
+
+				<p><span class='description'>lists of chip-8 roms</span></p>
+
+				<a href='https://github.com/dmatlack/chip8/tree/master/roms/games'><span class='button'>games</span></a>
+				<br>
+				<a href='https://github.com/dmatlack/chip8/tree/master/roms/programs'><span class='button'>programs</span></a>
+	
+			</div>
+
+		</div>
+
+		<br>
+
+		<hr>
+
+		<p><span class='description'>nectar boy - 2020</span>
 
 	</body>
 

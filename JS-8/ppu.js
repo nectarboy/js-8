@@ -27,6 +27,16 @@ var Ppu = function (c8) {
 
 	};
 
+	this.TogglePx = function (ind, bit) {
+
+		var vram = this.vram;
+		var col = (vram [ind] && bit) ? 1 : 0;
+		vram [ind] = vram [ind] ^ bit;
+
+		return col;
+
+	};
+
 	this.Refresh = function () {
 
 		if (!c8.cpu.shouldrefresh)

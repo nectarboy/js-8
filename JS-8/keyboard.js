@@ -114,9 +114,9 @@ var Keyboard = function (c8) {
 				break;
 			}
 
-			return true;
-
 		}
+
+		return true;
 
 	};
 
@@ -129,8 +129,9 @@ var Keyboard = function (c8) {
 
 		that.firing [e.keyCode] = true;
 
-		if (that.changekeystate (e.keyCode, 1))
+		if (that.changekeystate (e.keyCode, 1)) {
 			c8.cpu.keyclicked = true;
+		}
 
 	};
 

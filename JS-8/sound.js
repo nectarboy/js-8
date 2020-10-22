@@ -2,21 +2,25 @@ var Sound = function (c8) {
 
 	// init audio //
 
-	this.ctx = new (AudioContext  || webkitAudioContext) ();
+	var audclass = window.AudioContext || window.webkitAudioContext;
+
+	this.ctx = new audclass ();
 
 	// FUNCTIONS //
 
 	this.Beep = function () {
 
 		var osc = this.ctx.createOscillator ();
-
-		osc.connect (this.ctx.destination);
 	
-		// custom settings //
+		// custom settings
 	
 		osc.type = 'triangle';
 		osc.frequency.value = 500;
-		duration = c8.cpu.soundtimer; // ms
+		duration = c8.cpu.soundtimer * 2; // ms
+
+		// start
+
+		osc.connect (this.ctx.destination);
 
 		osc.start ();
 
@@ -25,7 +29,6 @@ var Sound = function (c8) {
 		setTimeout (function () {
 
 			osc.stop ();
-			osc.disconnect (that.ctx.destination);
 
 		}, duration);
 
