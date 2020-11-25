@@ -15,7 +15,7 @@ To add it you just need:
 Anway if you really wanna add this to your site or whatever just look through the source and figure it out, cuz ion wanna do it, i promise it's readable :D
 
 ## How to Use
-First, pick a rom and drag it into the rom input (if you have no roms, you can use the links at the bottom of the page)
+First, pick a rom and drag it into the rom input (if you have no roms, you can use the links at the bottom of the page).
 Then you can just start playing :) The keyboard layout is:
 
 `1 2 3 4
