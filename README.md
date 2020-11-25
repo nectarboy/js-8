@@ -19,10 +19,12 @@ First, pick a rom and drag it into the rom input (if you have no roms, you can u
 Then you can just start playing :) The keyboard layout is:
 
 ```
-1 2 3 4
-Q W E R
-A S D F
-Z X C V
++---------+-----+---------+
+| 1 2 3 4 | --> | 1 2 3 C |
+| Q W E R | --> | 4 5 6 D |
+| A S D F | --> | 7 8 9 E |
+| Z X C V | --> | A 0 B F |
++---------+-----+---------+
 ```
 
 ### Welp...
