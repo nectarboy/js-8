@@ -10,12 +10,14 @@ This emulator is fairly portable and can be added to your website for whatever r
 To add it you just need:
 - a `<canvas>` for display,
 - an `<input type = file>` in order to insert a game rom.
+
 (i aint gonna document the functions bitch i know u aint interested)
 Anway if you really wanna add this to your site or whatever just look through the source and figure it out, cuz ion wanna do it, i promise it's readable :D
 
 ## How to Use
 First, pick a rom and drag it into the rom input (if you have no roms, you can use the links at the bottom of the page)
 Then you can just start playing :) The keyboard layout is:
+
 `1 2 3 4
 Q W E R
 A S D F
