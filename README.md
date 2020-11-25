@@ -18,10 +18,12 @@ Anway if you really wanna add this to your site or whatever just look through th
 First, pick a rom and drag it into the rom input (if you have no roms, you can use the links at the bottom of the page).
 Then you can just start playing :) The keyboard layout is:
 
-`1 2 3 4
+```
+1 2 3 4
 Q W E R
 A S D F
-Z X C V`
+Z X C V
+```
 
 ### Welp...
 That's my emulator, i'll prolly work on more emulators cuz they're fun as fuckkk to make. Enjoy muthafuckas :D
